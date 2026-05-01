@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Enhanced Dino Runner</title>
+<style>
+  body { margin: 0; background: #111; color: white; font-family: Arial; text-align: center; }
+  canvas { background: #222; display: block; margin: 0 auto; }
+</style>
+</head>
+<body>
+<h2>Enhanced Dino Runner 🦖</h2>
+<p>Press SPACE to jump, SHIFT for dash</p>
+<canvas id="game" width="800" height="300"></canvas>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let player = { x: 50, y: 250, w: 30, h: 30, vy: 0, jumping: false };
+let gravity = 0.8;
+let obstacles = [];
+let powerUps = [];
+let score = 0;
+let speed = 5;
+let dash = false;
+let dashTime = 0;
+
+function spawnObstacle() {
+  obstacles.push({ x: 800, y: 260, w: 20, h: 40 });
+}
+
+function spawnPowerUp() {
+  powerUps.push({ x: 800, y: 200, w: 15, h: 15 });
+}
+
+setInterval(spawnObstacle, 1500);
+setInterval(spawnPowerUp, 5000);
+
+function update() {
+  player.vy += gravity;
+  player.y += player.vy;
+
+  if (player.y > 250) {
+    player.y = 250;
+    player.jumping = false;
+  }
+
+  obstacles.forEach(o => o.x -= speed + (dash ? 5 : 0));
+  powerUps.forEach(p => p.x -= speed);
+
+  obstacles = obstacles.filter(o => o.x > -20);
+  powerUps = powerUps.filter(p => p.x > -20);
+
+  // collision
+  obstacles.forEach(o => {
+    if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) {
+      alert('Game Over! Score: ' + score);
+      document.location.reload();
+    }
+  });
+
+  powerUps.forEach((p, i) => {
+    if (player.x < p.x + p.w && player.x + player.w > p.x && player.y < p.y + p.h && player.y + player.h > p.y) {
+      speed += 1;
+      powerUps.splice(i, 1);
+    }
+  });
+
+  if (dash) {
+    dashTime--;
+    if (dashTime <= 0) dash = false;
+  }
+
+  score++;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // player
+  ctx.fillStyle = 'lime';
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // obstacles
+  ctx.fillStyle = 'red';
+  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+
+  // powerups
+  ctx.fillStyle = 'cyan';
+  powerUps.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+
+  // score
+  ctx.fillStyle = 'white';
+  ctx.fillText('Score: ' + score, 10, 20);
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !player.jumping) {
+    player.vy = -12;
+    player.jumping = true;
+  }
+
+  if (e.code === 'ShiftLeft') {
+    dash = true;
+    dashTime = 20;
+  }
+});
+</script>
+</body>
+</html>
